@@ -6,28 +6,24 @@ top(top_), left(left_), rows(rows_), cols(cols_)
 {
     height = rows * 2 + 1;
     width = cols * 3 + 1;
-    init_color(COLOR_BLUE, 0, 0, 0);
-    init_pair(1, COLOR_CYAN, COLOR_BLUE);
-    init_pair(2, COLOR_CYAN, COLOR_WHITE);
-    bcolor = 1;
-    wcolor = 2;
+    bgid = 0;
+    for (int i = 0; i < 8; i++)
+    {
+        init_pair(i + 1, COLOR_BLUE, i);
+        cpairs[i] = i + 1;
+    }
     win = newwin(height, width, top, left);
     drawBoard();
 }
-void BoardWin::setAt(int row, int col, Color color)
+void BoardWin::setAt(int row, int col, int color)
 {
     if (row < 0 || row >= rows || col < 0 || col >= cols)
         throw "Try to render chess at invalid position";
     int grow = row * 2 + 1, gcol = col * 3 + 1;
-    int cpair;
-    if (color == Color::BLACK)
-        cpair = bcolor;
-    else if (color == Color::WHITE)
-        cpair = wcolor;
+    if (color == -1) // clear
+        mvwchgat(win, grow, gcol, 2, A_NORMAL, bgid, NULL);
     else
-        throw "Unknown color of chess";
-    
-    mvwchgat(win, grow, gcol, 2, A_NORMAL, cpair, NULL);
+        mvwchgat(win, grow, gcol, 2, A_NORMAL, cpairs[color], NULL);
     wrefresh(win);
 }
 BoardWin::~BoardWin()
@@ -36,6 +32,7 @@ BoardWin::~BoardWin()
 }
 void BoardWin::drawBoard()
 {
+    attron(COLOR_PAIR(bgid));
     // top line
     mvwaddch(win, 0, 0, ACS_ULCORNER);
     for (int i = 1; i <= (width - 1) / 3 - 1; i++)
@@ -92,9 +89,39 @@ void BoardWin::drawBoard()
     waddch(win, ACS_HLINE);
     waddch(win, ACS_HLINE);
     waddch(win, ACS_LRCORNER);
+    attroff(COLOR_PAIR(bgid));
     wrefresh(win);
 }
-
+Board::Board(int rows_, int cols_, BoardWin* win): rows(rows_), cols(cols_), bwin(win)
+{
+    for (auto& vec: states)
+        vec.resize(cols);
+    states.resize(rows);
+}
+const Board::Mat& Board::getMat() const
+{
+    return states;
+}
+bool Board::setAt(int row, int col, State turn)
+{
+    if (row < 0 || row > rows - 1 ||
+    col < 0 || col > cols - 1
+    )
+        throw "Row Set Overflow";
+    else if (turn == E)
+        throw "Invalid chess Empty";
+    else if (states[row][col] != E)
+        return false;
+    else
+    {
+        states[row][col] = int(turn);
+        int color = (turn == B ? COLOR_BLUE : COLOR_WHITE);
+        bwin->setAt(row, col, color);
+        return true;
+    }
+}
+int Board::getRows() const { return rows; }
+int Board::getCols() const { return cols; }
 WINDOW* createBoard(int height, int width, int top, int left)
 {
     width = width * 3 + 1;
