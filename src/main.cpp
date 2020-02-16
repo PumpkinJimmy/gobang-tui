@@ -1,5 +1,6 @@
 #include <ncurses.h>
 #include "board.h"
+#include "status.h"
 using namespace std;
 
 int main()
@@ -27,39 +28,11 @@ int main()
     while (1)
     {
         ch = getch();
-        switch (ch)
+        if (!board.handle(ch))
         {
-        case KEY_LEFT:
-            if (curcol == 0)
-                break;
-            bwin.setAt(currow, curcol, COLOR_INVIS);
-            bwin.setAt(currow, --curcol, COLOR_YELLOW);
-            break;
-        case KEY_RIGHT:
-            if (curcol == 9)
-                break;
-            bwin.setAt(currow, curcol, COLOR_INVIS);
-            bwin.setAt(currow, ++curcol, COLOR_YELLOW);
-            break;
-        case KEY_UP:
-            if (currow == 0)
-                break;
-            bwin.setAt(currow, curcol, COLOR_INVIS);
-            bwin.setAt(--currow, curcol, COLOR_YELLOW);
-            break;
-        case KEY_DOWN:
-            if (currow == 9)
-                break;
-            bwin.setAt(currow, curcol, COLOR_INVIS);
-            bwin.setAt(++currow, curcol, COLOR_YELLOW);
-            break;
-        case '\n': // Enter
-            mvprintw(LINES - 1, 0, "Choose (%d, %d)", currow, curcol);
-            refresh();
-            break;
-        default:
-            break;
         }
+        board.render();
+        char str[100];
     }
     getch();
 

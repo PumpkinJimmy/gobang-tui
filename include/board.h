@@ -31,17 +31,32 @@ private:
 class Board
 {
 public:
-    enum State{E=0, B=1, W=2};
+    enum State{B=1, W=2};
+    enum {E=0, SE=3, ISE=4};
     typedef vector<vector<int>> Mat;
     Board(int rows_, int cols_, BoardWin* win);
     const Mat& getMat() const;
     bool setAt(int row, int col, State turn);
+    // for controller
+    bool handle(chtype key);
+    // getters
     int getRows() const;
     int getCols() const;
+    State getTurn() const;
+    // render
+    void render();
 private:
+    // state
     int rows;
     int cols;
-    BoardWin* bwin;
     Mat states;
+    // controlller
+    int currow;
+    int curcol;
+    State curturn;
+    // render
+    BoardWin* bwin;
+    const int cid[5] = {COLOR_BLUE, COLOR_BLACK, COLOR_WHITE, COLOR_YELLOW, COLOR_RED};   
+    void render_cursor(int row, int col);
 };
 #endif
