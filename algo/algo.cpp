@@ -165,8 +165,8 @@ int main()
     // board.setAt({1, 1}, Board::W);
     board.setAt({1, 2}, Board::B);
     board.setAt({1, 3}, Board::B);
-    board.setAt({1, 4}, Board::B);
-    board.setAt({1, 6}, Board::B);
+    board.setAt({1, 5}, Board::B);
+    // board.setAt({1, 6}, Board::B);
     vector<Board::Pos> res_ps;
     cout << board.solveRow({1, 3}, res_ps) << endl;
     for (auto pos : res_ps)
