@@ -4,7 +4,7 @@
 #include <vector>
 #define COLOR_INVIS -1
 using std::vector;
-WINDOW* createBoard(int, int, int, int);
+
 class BoardWin
 {
 public:
@@ -45,18 +45,28 @@ public:
     State getTurn() const;
     // render
     void render();
+    // judge
+    bool judgeCurrent(int res_chess[5][2]) const;
+    bool judgeCurrent() const;
+    bool judgeAll(int res_chess[5][2]) const;
+    bool isWin() const { return is_win; }
+
 private:
     // state
     int rows;
     int cols;
     Mat states;
+    State curturn;
     // controlller
     int currow;
     int curcol;
-    State curturn;
     // render
     BoardWin* bwin;
     const int cid[5] = {COLOR_BLUE, COLOR_BLACK, COLOR_WHITE, COLOR_YELLOW, COLOR_RED};   
     void render_cursor(int row, int col);
+    // judge
+    int last_row, last_col;
+    // game
+    bool is_win;
 };
 #endif

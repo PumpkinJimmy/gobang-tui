@@ -31,8 +31,8 @@ int main()
         if (!board.handle(ch))
         {
         }
+        if (board.isWin()) { break; }
         board.render();
-        char str[100];
     }
     getch();
 
