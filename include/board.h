@@ -11,6 +11,8 @@ public:
     BoardWin(int rows_, int cols_, int top_, int left_);
 
     void setAt(int row, int col, int color);
+    void clearAt(int row, int col);
+    void setAt(int row, int col, chtype ch, attr_t attr, int fgcolor, int _bgcolor=-1);
 
     ~BoardWin();
 
@@ -21,8 +23,9 @@ private:
     int left;
     int width;
     int height;
-    int bgid;
+    int bgcolor;
     int cpairs[8];
+    int cid_cnt;
     WINDOW* win;
     void drawBoard();
     BoardWin(const BoardWin& other); //forbidden

@@ -2,11 +2,12 @@
 #include <cstdlib>
 #include "board.h"
 #include "status.h"
-BoardWin::BoardWin(int rows_, int cols_, int top_, int left_) : top(top_), left(left_), rows(rows_), cols(cols_)
+
+BoardWin::BoardWin(int rows_, int cols_, int top_, int left_) : 
+top(top_), left(left_), rows(rows_), cols(cols_), cid_cnt(10), bgcolor(COLOR_BLUE)
 {
     height = rows * 2 + 1;
     width = cols * 3 + 1;
-    bgid = 0;
     for (int i = 0; i < 8; i++)
     {
         init_pair(i + 1, COLOR_BLUE, i);
@@ -15,15 +16,31 @@ BoardWin::BoardWin(int rows_, int cols_, int top_, int left_) : top(top_), left(
     win = newwin(height, width, top, left);
     drawBoard();
 }
+void BoardWin::setAt(int row, int col, chtype ch, attr_t attr, int fgcolor, int _bgcolor)
+{
+    if (row < 0 || row >= rows || col < 0 || col >= cols)
+        throw "Try to render chess at invalid position";
+    int grow = row * 2 + 1, gcol = col * 3 + 1;
+    if (_bgcolor == -1) _bgcolor = bgcolor;
+    mvwaddch(win, grow, gcol, ch);
+    mvwaddch(win, grow, gcol+1, ch);
+    init_pair(++cid_cnt, fgcolor, _bgcolor);
+    // init_pair(++cid_cnt, COLOR_WHITE, COLOR_BLUE);
+    mvwchgat(win, grow, gcol, 2, attr, cid_cnt, NULL);
+    // mvwchgat(win, grow, gcol, 2, A_BLINK, cid_cnt, NULL);
+    wrefresh(win);
+}
 void BoardWin::setAt(int row, int col, int color)
 {
     if (row < 0 || row >= rows || col < 0 || col >= cols)
         throw "Try to render chess at invalid position";
     int grow = row * 2 + 1, gcol = col * 3 + 1;
-    if (color == -1) // clear
-        mvwchgat(win, grow, gcol, 2, A_NORMAL, bgid, NULL);
-    else
-        mvwchgat(win, grow, gcol, 2, A_NORMAL, cpairs[color], NULL);
+    int cid;
+    if (color == -1) cid = 0;
+    else cid = cpairs[color];
+    mvwaddch(win, grow, gcol, ' ');
+    mvwaddch(win, grow, gcol+1, ' ');
+    mvwchgat(win, grow, gcol, 2, A_NORMAL, cid, NULL);
     wrefresh(win);
 }
 BoardWin::~BoardWin()
@@ -32,7 +49,7 @@ BoardWin::~BoardWin()
 }
 void BoardWin::drawBoard()
 {
-    attron(COLOR_PAIR(bgid));
+    attron(COLOR_PAIR(0));
     // top line
     mvwaddch(win, 0, 0, ACS_ULCORNER);
     for (int i = 1; i <= (width - 1) / 3 - 1; i++)
@@ -89,7 +106,7 @@ void BoardWin::drawBoard()
     waddch(win, ACS_HLINE);
     waddch(win, ACS_HLINE);
     waddch(win, ACS_LRCORNER);
-    attroff(COLOR_PAIR(bgid));
+    attroff(COLOR_PAIR(0));
     wrefresh(win);
 }
 Board::Board(int rows_, int cols_, BoardWin *win)
@@ -165,12 +182,15 @@ bool Board::handle(chtype key)
             curturn = (curturn == B ? W : B);
             last_row = currow;
             last_col = curcol;
-            if (judgeCurrent())
+            int res[5][2];
+            if (judgeCurrent(res))
             {
                 char str[100];
                 sprintf(str, "%s WIN THE GAME", (curturn == W ? "BLACK" : "WHITE"));
                 StatusBar::getInstance()->setText(str);
                 is_win = true;
+                for (int p = 0; p < 5; p++)
+                    bwin->setAt(res[p][0], res[p][1], '#', A_BLINK, (curturn == W ? COLOR_BLACK : COLOR_WHITE));
             }
         }
         return true;
@@ -191,42 +211,73 @@ int Board::getCols() const { return cols; }
 Board::State Board::getTurn() const { return curturn; };
 bool Board::judgeCurrent() const
 {
+    int tmp[5][2];
+    return judgeCurrent(tmp);
+}
+bool Board::judgeCurrent(int res[5][2]) const 
+{
     if (last_row == -1 || last_col == -1) return false;
     State turn = (curturn == B ? W : B);
     int row = last_row, col = last_col;
+    res[0][0] = row; res[0][1] = col;
     // horizontal
     int tot = 1;
-    for (int i = 1; tot < 5 && col+i <= cols-1 && states[row][col+i]==turn;i++,tot++);
-    for (int i = -1;tot < 5 && col+i >= 0 && states[row][col+i]==turn;i--,tot++);
+
+    for (int i = 1;
+    tot < 5 && col+i <= cols-1 && states[row][col+i]==turn;
+    res[tot][0]=row, res[tot][1]=col+i,tot++,i++);
+
+    for (int i = -1;
+    tot < 5 && col+i >= 0 && states[row][col+i]==turn;
+    res[tot][0]=row, res[tot][1]=col+i,tot++,i--);
+
     if (tot >= 5) return true;
+
     // verticle
     tot = 1;
-    for (int i = 1;tot < 5 && row+i <= rows-1 && states[row+i][col]==turn;i++,tot++);
-    for (int i = -1;tot < 5 && row+i >= 0 && states[row+i][col]==turn;i--,tot++);
+
+    for (int i = 1;
+    tot < 5 && row+i <= rows-1 && states[row+i][col]==turn;
+    res[tot][0]=row+i, res[tot][1]=col,tot++,i++);
+    for (int i = -1;
+    tot < 5 && row+i >= 0 && states[row+i][col]==turn;
+    res[tot][0]=row+i, res[tot][1]=col,tot++,i--);
+
     if (tot >= 5) return true;
+
     // main cross
     tot = 1;
+
     for (int i = 1;
     tot < 5 && 
     row+i <= rows-1 && col+i <= cols-1 &&
     states[row+i][col+i]==turn;
-    i++,tot++);
+    res[tot][0]=row+i, res[tot][1]=col+i,tot++,i++);
+
     for (int i = -1;
     tot < 5 && 
     row+i >= 0 && col+i >=0 &&
     states[row+i][col+i]==turn;
-    i--,tot++);
+    res[tot][0]=row+i, res[tot][1]=col+i,tot++,i--);
+
     if (tot >= 5) return true;
+
     // other cross
     tot = 1;
+
     for (int i = 1;
     tot < 5 && 
     row+i <= rows-1 && col-i >= 0 &&
-    states[row+i][col-i]==turn;i++,tot++);
+    states[row+i][col-i]==turn;
+    res[tot][0]=row+i, res[tot][1]=col-i,tot++,i++);
+
     for (int i = -1;
     tot < 5 && 
     row+i >= 0 && col-i <= cols-1 &&
-    states[row+i][col-i]==turn;i--,tot++);
+    states[row+i][col-i]==turn;
+    res[tot][0]=row+i, res[tot][1]=col-i,tot++,i--);
+
     if (tot >= 5) return true;
+
     return false;
 }
