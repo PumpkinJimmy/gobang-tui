@@ -1,8 +1,11 @@
 #include <cstring>
 #include <queue>
 #include <array>
-#include <match.h>
+#include <functional>
+#include <algorithm>
+#include "match.h"
 using namespace std;
+const int inf = 0x3f3f3f3f;
 const int PatCnt = 13;
 const char* pats[PatCnt+1] =
     {
@@ -48,6 +51,39 @@ int ptrans[11][3][4] = { {},
     {{10}, {10}, {10}}, //8
     {{10}, {10}}, //9
 };
+int eval(const vector<int>& states, Matcher::Pat pat)
+{
+    switch (pat.id)
+    {
+    case 10:
+        return inf;
+    case 9:
+        if (pat.guard == 0) return inf / 3;
+        else if (pat.guard == 1) return 20;
+        else return 0;
+    case 8:
+        return 20;
+    case 7:
+        return 10;
+    case 6:
+        if (pat.guard == 2) return 0;
+        else return 10;
+    case 5:
+        if (pat.guard == 2) return 0;
+        else if (pat.guard == 1) return 10;
+        else return 15;
+    case 4:
+        return 3;
+    case 3:
+        if (pat.guard == 2) return 0;
+        else return 3;
+    case 2:
+        if (pat.guard == 2) return 0;
+        else return 4;
+    case 1:
+        return 0;
+    }
+}
 Matcher::Matcher()
 :cnt(0)
 {
@@ -59,25 +95,45 @@ Matcher::Matcher()
     {
         for (int j = 0; j < info[i][1]; j++)
         {
-            loadPatStr(pats[i], info[i][0]);
+            loadPatStr(pats[i], i);
             reverse(pats[i], tmp);
-            loadPatStr(tmp, info[i][0]);
+            loadPatStr(tmp, i);
         }
     }
     build();
 }
-vector<Matcher::Pat> Matcher::query(vector<int> s){
+vector<Matcher::Pat> Matcher::query(const vector<int>& s){
     int len=s.size();int now=0;
-    vector<Pat> ans;
+    vector<Pat> oans, ans;
     for(int i=0;i<len;i++){
         now = c[now][s[i]]; // jump to the next match node
-        for (int t=now; t&&val[t]; t=fail[t]) // follow the "fail" to sum all match pattern
-        {
-            int id = val[t];
-            int lpos = i-info[id][1]+1, rpos = i;
-            int guard = (s[lpos] != 0) + (s[rpos] != 0);
-            ans.push_back({i - info[id][1] + 1, i, id});
+        if (val[now]){
+            int maxv = -1; Pat maxpat;
+            for (int t=now; t&&val[t]; t=fail[t]) // follow the "fail" to sum all match pattern
+            {
+                int id = info[val[t]][0];
+                int lpos = i-info[val[t]][1]+1, rpos = i;
+                int guard = (s[lpos-1] != 0) + (s[rpos+1] != 0);
+                Pat tmp{i - info[val[t]][1] + 1, i, id, guard};
+                tmp.v = eval(s, tmp);
+                if (tmp.v > maxv) {maxv = tmp.v; maxpat = tmp; }
+            }
+            oans.push_back(maxpat);
         }
+    }
+    sort(oans.begin(), oans.end(), greater<Pat>());
+    for (int i = 0; i < oans.size(); i++)
+    {
+        bool ok = true;
+        for (int j = i - 1; j >= 0; j--)
+        {
+            if (oans[j].lpos <= oans[i].lpos && oans[i].rpos <= oans[j].rpos)
+            {
+                ok = false;
+                break;
+            }
+        }
+        if (ok) ans.push_back(oans[i]);
     }
     return ans;
 }
@@ -109,4 +165,15 @@ void Matcher::build(){
         else c[u][i]=c[fail[u]][i];
         // build a Trie Graph
     }
+}
+Matcher mt;
+int evalMove(vector<int> states, int mv)
+{
+    auto pat1 = mt.query(states);
+    states[mv] = 1;
+    auto pat2 = mt.query(states);
+    int bene1=0, bene2=0;
+    for (auto pat: pat1) bene1 += pat.v;
+    for (auto pat: pat2) bene2 += pat.v;
+    return bene2 - bene1;
 }

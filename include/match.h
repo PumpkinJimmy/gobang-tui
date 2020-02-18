@@ -11,9 +11,11 @@ public:
         int lpos; int rpos; // [lpos, rpos]
         int id;
         int guard;
+        int v;
+        bool operator>(const Pat& other) const { return v > other.v; }
     };
     Matcher();
-    vector<Pat> query(vector<int> s);
+    vector<Pat> query(const vector<int>& s);
 private:
     void reverse(const char* s, char res[]);
     void loadPatStr(const char* s, int id);
@@ -21,4 +23,5 @@ private:
     static const int N = 50010;
     int c[N][3],val[N],fail[N],cnt;
 };
+int evalMove(vector<int> states, int mv);
 #endif
