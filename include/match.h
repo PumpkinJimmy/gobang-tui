@@ -3,6 +3,7 @@
 #include <cstring>
 #include <queue>
 #include <array>
+#include "board.h"
 using namespace std;
 class Matcher{
 public:
@@ -23,5 +24,5 @@ private:
     static const int N = 50010;
     int c[N][3],val[N],fail[N],cnt;
 };
-int evalMove(vector<int> states, int mv);
+int evalMove(vector<int> states, int, int mv);
 #endif
