@@ -2,9 +2,13 @@
 #define __BOARD_H
 #include <ncurses.h>
 #include <vector>
+#include <array>
 #define COLOR_INVIS -1
 using std::vector;
-
+using Pos = std::array<int, 2>;
+using Mat = vector<vector<int>>;
+enum State{B=1, W=2};
+enum {E=0, SE=3, ISE=4};
 class BoardWin
 {
 public:
@@ -34,9 +38,8 @@ private:
 class Board
 {
 public:
-    enum State{B=1, W=2};
-    enum {E=0, SE=3, ISE=4};
-    typedef vector<vector<int>> Mat;
+    
+    
     Board(int rows_, int cols_, BoardWin* win);
     const Mat& getMat() const;
     bool setAt(int row, int col, State turn);
@@ -45,7 +48,7 @@ public:
     // getters
     int getRows() const;
     int getCols() const;
-    State getTurn() const;
+    // State getTurn() const;
     // render
     void render();
     // judge
@@ -71,5 +74,29 @@ private:
     int last_row, last_col;
     // game
     bool is_win;
+};
+
+class BoardRenderer
+{
+public:
+    BoardRenderer(BoardWin* bwin, const Board* board);
+    void renderChess();
+    void renderCursor(Pos pos);
+    void renderBlink(vector<Pos> pos);
+private:
+    BoardWin* bwin;
+    const Board* board;
+};
+
+class Controller
+{
+public:
+    Controller(Board* board, BoardRenderer* renderer, JudgeStrategy* judge);
+    bool handle(chtype ch);
+};
+
+class JudgeStrategy
+{
+    bool judgeAll(const Mat& mat);
 };
 #endif
