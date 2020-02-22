@@ -38,8 +38,6 @@ private:
 class Board
 {
 public:
-    
-    
     Board(int rows_, int cols_, BoardWin* win);
     const Mat& getMat() const;
     bool setAt(int row, int col, State turn);
@@ -86,17 +84,5 @@ public:
 private:
     BoardWin* bwin;
     const Board* board;
-};
-
-class Controller
-{
-public:
-    Controller(Board* board, BoardRenderer* renderer, JudgeStrategy* judge);
-    bool handle(chtype ch);
-};
-
-class JudgeStrategy
-{
-    bool judgeAll(const Mat& mat);
 };
 #endif
