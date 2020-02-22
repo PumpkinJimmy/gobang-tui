@@ -42,13 +42,17 @@ private:
 class Board
 {
 public:
-    Board(int rows_, int cols_, BoardWin* win);
+    Board(int rows_, int cols_);
     const BoardMat& getMat() const;
     State getAt(Pos pos) const;
     bool setAt(Pos pos, State turn);
     // getters
-    int getRows() const;
-    int getCols() const;
+    int getRows() const{
+        return rows;
+    }
+    int getCols() const{
+        return cols;
+    }
 
 private:
     int rows;

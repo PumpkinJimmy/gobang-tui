@@ -43,6 +43,10 @@ void BoardWin::setAt(int row, int col, int color)
     mvwchgat(win, grow, gcol, 2, A_NORMAL, cid, NULL);
     wrefresh(win);
 }
+void BoardWin::clearAt(int row, int col)
+{
+    setAt(row, col, -1);
+}
 BoardWin::~BoardWin()
 {
     delwin(win);
@@ -109,7 +113,7 @@ void BoardWin::drawBoard()
     attroff(COLOR_PAIR(0));
     wrefresh(win);
 }
-Board::Board(int rows_, int cols_, BoardWin *win)
+Board::Board(int rows_, int cols_)
 :rows(rows_), cols(cols_)
 {
     states.resize(rows+2);
@@ -135,7 +139,7 @@ State Board::getAt(Pos pos) const
 }
 bool Board::setAt(Pos pos, State turn)
 {
-    if (turn != State::B || turn != State::W)
+    if (turn != State::B && turn != State::W)
     {
         throw "Invalid state set";
     }
@@ -178,6 +182,7 @@ void BoardRenderer::renderChess(Pos chess_pos)
 }
 void BoardRenderer::renderCursor(Pos pos)
 {
+    bwin->clearAt(last_cursor[0]-1, last_cursor[1]-1);
     renderChess(last_cursor);
     State st = board->getAt(pos);
     if (st == State::E)
@@ -196,148 +201,3 @@ void BoardRenderer::renderBlink(vector<Pos> pos)
             bwin->setAt(p[0]-1, p[1]-1, '#', A_BLINK, COLOR_WHITE);
     }
 }
-// bool Board::handle(chtype key)
-// {
-//     int c;
-//     switch (key)
-//     {
-//     case 0x1b: //ESC to exit
-//         exit(0);
-//     case KEY_LEFT:
-//         if (curcol == 0)
-//             return true;
-//         bwin->setAt(currow, curcol, cid[states[currow][curcol]]);
-//         curcol--;
-//         c = states[currow][curcol] == E ? SE : ISE;
-//         bwin->setAt(currow, curcol, cid[c]);
-//         return true;
-//     case KEY_RIGHT:
-//         if (curcol == cols - 1)
-//             return true;
-//         bwin->setAt(currow, curcol, cid[states[currow][curcol]]);
-//         curcol++;
-//         c = states[currow][curcol] == E ? SE : ISE;
-//         bwin->setAt(currow, curcol, cid[c]);
-//         return true;
-//     case KEY_UP:
-//         if (currow == 0)
-//             return true;
-//         bwin->setAt(currow, curcol, cid[states[currow][curcol]]);
-//         currow--;
-//         c = states[currow][curcol] == E ? SE : ISE;
-//         bwin->setAt(currow, curcol, cid[c]);
-//         return true;
-//     case KEY_DOWN:
-//         if (currow == rows-1)
-//             return true;
-//         bwin->setAt(currow, curcol, cid[states[currow][curcol]]);
-//         currow++;
-//         c = states[currow][curcol] == E ? SE : ISE;
-//         bwin->setAt(currow, curcol, cid[c]);
-//         return true;
-//     case '\n': // 'ENTER to input'
-//         if (states[currow][curcol] == E)
-//         {
-//             setAt(currow, curcol, curturn);
-//             curturn = (curturn == B ? W : B);
-//             last_row = currow;
-//             last_col = curcol;
-//             int res[5][2];
-//             if (judgeCurrent(res))
-//             {
-//                 char str[100];
-//                 sprintf(str, "%s WIN THE GAME", (curturn == W ? "BLACK" : "WHITE"));
-//                 StatusBar::getInstance()->setText(str);
-//                 is_win = true;
-//                 for (int p = 0; p < 5; p++)
-//                     bwin->setAt(res[p][0], res[p][1], '#', A_BLINK, (curturn == W ? COLOR_BLACK : COLOR_WHITE));
-//             }
-//         }
-//         return true;
-//     default:
-//         return false;
-//     }
-// }
-// void Board::render()
-// {
-//     char str[100];
-//     sprintf(str, "(%d, %d) %s", currow, curcol, 
-//     curturn == B ? "BLACK" : "WHITE"
-//     );
-//     StatusBar::getInstance()->setText(str);
-// }
-// int Board::getRows() const { return rows; }
-// int Board::getCols() const { return cols; }
-// Board::State Board::getTurn() const { return curturn; };
-// bool Board::judgeCurrent() const
-// {
-//     int tmp[5][2];
-//     return judgeCurrent(tmp);
-// }
-// bool Board::judgeCurrent(int res[5][2]) const 
-// {
-//     if (last_row == -1 || last_col == -1) return false;
-//     State turn = (curturn == B ? W : B);
-//     int row = last_row, col = last_col;
-//     res[0][0] = row; res[0][1] = col;
-//     // horizontal
-//     int tot = 1;
-
-//     for (int i = 1;
-//     tot < 5 && col+i <= cols-1 && states[row][col+i]==turn;
-//     res[tot][0]=row, res[tot][1]=col+i,tot++,i++);
-
-//     for (int i = -1;
-//     tot < 5 && col+i >= 0 && states[row][col+i]==turn;
-//     res[tot][0]=row, res[tot][1]=col+i,tot++,i--);
-
-//     if (tot >= 5) return true;
-
-//     // verticle
-//     tot = 1;
-
-//     for (int i = 1;
-//     tot < 5 && row+i <= rows-1 && states[row+i][col]==turn;
-//     res[tot][0]=row+i, res[tot][1]=col,tot++,i++);
-//     for (int i = -1;
-//     tot < 5 && row+i >= 0 && states[row+i][col]==turn;
-//     res[tot][0]=row+i, res[tot][1]=col,tot++,i--);
-
-//     if (tot >= 5) return true;
-
-//     // main cross
-//     tot = 1;
-
-//     for (int i = 1;
-//     tot < 5 && 
-//     row+i <= rows-1 && col+i <= cols-1 &&
-//     states[row+i][col+i]==turn;
-//     res[tot][0]=row+i, res[tot][1]=col+i,tot++,i++);
-
-//     for (int i = -1;
-//     tot < 5 && 
-//     row+i >= 0 && col+i >=0 &&
-//     states[row+i][col+i]==turn;
-//     res[tot][0]=row+i, res[tot][1]=col+i,tot++,i--);
-
-//     if (tot >= 5) return true;
-
-//     // other cross
-//     tot = 1;
-
-//     for (int i = 1;
-//     tot < 5 && 
-//     row+i <= rows-1 && col-i >= 0 &&
-//     states[row+i][col-i]==turn;
-//     res[tot][0]=row+i, res[tot][1]=col-i,tot++,i++);
-
-//     for (int i = -1;
-//     tot < 5 && 
-//     row+i >= 0 && col-i <= cols-1 &&
-//     states[row+i][col-i]==turn;
-//     res[tot][0]=row+i, res[tot][1]=col-i,tot++,i--);
-
-//     if (tot >= 5) return true;
-
-//     return false;
-// }
