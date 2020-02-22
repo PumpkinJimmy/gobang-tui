@@ -6,9 +6,9 @@
 #define COLOR_INVIS -1
 using std::vector;
 using Pos = std::array<int, 2>;
-using Mat = vector<vector<int>>;
-enum State{B=1, W=2};
-enum {E=0, SE=3, ISE=4};
+enum class State {E=0, B=1, W=2, X=3}; //B:Black; W:White; X:Edge;
+using BoardMat = vector<vector<State>>;
+
 class BoardWin
 {
 public:
@@ -35,54 +35,39 @@ private:
     BoardWin(const BoardWin& other); //forbidden
     BoardWin& operator=(const BoardWin& other); //forbidden
 };
+/*
+ * Chessboard abstraction
+ * Index from 1
+ */
 class Board
 {
 public:
     Board(int rows_, int cols_, BoardWin* win);
-    const Mat& getMat() const;
-    bool setAt(int row, int col, State turn);
-    // for controller
-    bool handle(chtype key);
+    const BoardMat& getMat() const;
+    State getAt(Pos pos) const;
+    bool setAt(Pos pos, State turn);
     // getters
     int getRows() const;
     int getCols() const;
-    // State getTurn() const;
-    // render
-    void render();
-    // judge
-    bool judgeCurrent(int res_chess[5][2]) const;
-    bool judgeCurrent() const;
-    bool judgeAll(int res_chess[5][2]) const;
-    bool isWin() const { return is_win; }
 
 private:
-    // state
     int rows;
     int cols;
-    Mat states;
-    State curturn;
-    // controlller
-    int currow;
-    int curcol;
-    // render
-    BoardWin* bwin;
-    const int cid[5] = {COLOR_BLUE, COLOR_BLACK, COLOR_WHITE, COLOR_YELLOW, COLOR_RED};   
-    void render_cursor(int row, int col);
-    // judge
-    int last_row, last_col;
-    // game
-    bool is_win;
+    BoardMat states;
 };
 
 class BoardRenderer
 {
 public:
     BoardRenderer(BoardWin* bwin, const Board* board);
-    void renderChess();
+    void renderChess(Pos chess_pos);
+    void renderChessAll();
     void renderCursor(Pos pos);
     void renderBlink(vector<Pos> pos);
 private:
     BoardWin* bwin;
     const Board* board;
+    Pos last_cursor;
+    int rows, cols;
 };
 #endif
