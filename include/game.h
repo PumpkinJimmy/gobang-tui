@@ -44,26 +44,13 @@ class GobangGame
 {
 public:
     enum GameState{None=0, BWin=1, WWin=2, Draw=3};
-    void setJudge(JudgeStrategy* new_judge){
-        judge = new_judge;
-    }
-    void setController(Controller* new_controller){
-        controller = new_controller;
-        if (controller) controller->setRenderer(renderer);
-    }
-    void setRenderer(BoardRenderer* new_renderer){
-        renderer = new_renderer;
-        if (controller) controller->setRenderer(renderer);
-    }
-    void setBoard(Board* new_board){
-        board = new_board;
-    }
+    void init(JudgeStrategy* _judge, BoardRenderer* _renderer, Board* _board, Controller* _controller);
     static GobangGame* getInstance(){
         return instance;
     }
     void run();
     bool moveAt(Pos pos);
-    void initCurses();
+    static void initCurses();
     State getTurn(){
         return turn;
     }
@@ -74,6 +61,7 @@ private:
     GobangGame(const GobangGame& ); // forbidden
     void operator=(const GobangGame&); // forbidden
 
+    static bool has_init;
     static GobangGame* instance;
 
     BoardRenderer* renderer;
@@ -86,4 +74,29 @@ private:
     vector<Pos> win_pos;
 };
 
+class GobangGameFactory
+{
+public:
+    GobangGameFactory(int _rows, int _cols, int top, int left);
+    virtual void createBoard();
+    virtual void createBoardWin();
+    virtual void createRenderer();
+    virtual void createController();
+    virtual void createJudgeStrategy();
+    int getRows() const { return m_rows; }
+    int getCols() const { return m_cols; }
+    GobangGame* initGobangGame();
+    ~GobangGameFactory();
+protected:
+    Board* m_board;
+    BoardWin* m_bwin;
+    BoardRenderer* m_renderer;
+    JudgeStrategy* m_judge;
+    Controller* m_controller;
+    GobangGame* m_game;
+    int m_rows;
+    int m_cols;
+    int m_top;
+    int m_left;
+};
 #endif

@@ -153,11 +153,22 @@ bool Controller::handleExit(chtype ch)
     exit(0);
 }
 GobangGame* GobangGame::instance = new GobangGame;
+bool GobangGame::has_init = false;
 GobangGame::GobangGame():
-controller(nullptr), judge(nullptr), renderer(nullptr),
 turn(State::B), rows(0), cols(0), state(None)
 {
     initCurses();
+}
+void GobangGame::init(JudgeStrategy* _judge, BoardRenderer* _renderer, Board* _board, Controller* _controller)
+{
+    judge = _judge;
+    renderer = _renderer;
+    board = _board;
+    controller = _controller;
+    controller->setRenderer(renderer);
+    rows = board->getRows();
+    cols = board->getCols();
+    has_init = true;
 }
 GobangGame::~GobangGame(){
 }
@@ -173,14 +184,8 @@ void GobangGame::initCurses(){
     assume_default_colors(COLOR_WHITE, COLOR_BLUE); // background color
 }
 void GobangGame::run(){
-    if (!board)
-        throw "Missing board";
-    if (!renderer)
-        throw "Missing renderer";
-    if (!controller)
-        throw "Missing controller";
-    if (!judge)
-        throw "Missing judge startegy";
+    if (!has_init)
+        throw "GobangGame not initialized";
     renderer->renderCursor({1, 1});
     while (state == None)
     {
@@ -212,4 +217,44 @@ bool GobangGame::moveAt(Pos pos)
         return true;
     }
     else return false;
+}
+GobangGameFactory::GobangGameFactory(int rows, int cols, int top, int left):
+m_rows(rows), m_cols(cols), m_top(top), m_left(left){}
+GobangGameFactory::~GobangGameFactory(){
+    delete m_controller;
+    delete m_judge;
+    delete m_renderer;
+    delete m_board;
+    delete m_bwin;
+}
+GobangGame* GobangGameFactory::initGobangGame()
+{
+    createBoard();
+    createBoardWin();
+    createRenderer();
+    createController();
+    createJudgeStrategy();
+    m_game = GobangGame::getInstance();
+    m_game->init(m_judge, m_renderer, m_board, m_controller);
+    return m_game;
+}
+void GobangGameFactory::createBoard()
+{
+    m_board = new Board(m_rows, m_cols);
+}
+void GobangGameFactory::createBoardWin()
+{
+    m_bwin = new BoardWin(m_rows, m_cols, m_top, m_left);
+}
+void GobangGameFactory::createRenderer()
+{
+    m_renderer = new BoardRenderer(m_bwin, m_board);
+}
+void GobangGameFactory::createController()
+{
+    m_controller = new Controller(m_board, m_renderer);
+}
+void GobangGameFactory::createJudgeStrategy()
+{
+    m_judge = new JudgeStrategy(*m_board);
 }

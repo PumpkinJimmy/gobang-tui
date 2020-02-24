@@ -20,24 +20,14 @@ int main()
 //     {
 //         if (vec[i] == 0) std::cout << i << ' ' << evalMove(vec, bene, i) << std::endl;
 //     }
-
     attron(A_BOLD);
     mvprintw(0, (COLS - 11) / 2, "Gobang Game");
     attroff(A_BOLD);
     
     refresh();
-    Board board(10, 10);
-    BoardWin bwin(10, 10, (LINES-21)/2, (COLS-31)/2);
-    BoardRenderer renderer(&bwin, &board);
-    Controller controller(&board, &renderer);
-    JudgeStrategy judge(board);
-    GobangGame* app = GobangGame::getInstance();
-    app->setRenderer(&renderer);
-    app->setBoard(&board);
-    app->setController(&controller);
-    app->setJudge(&judge);
-    app->run();
-    
+    GobangGameFactory factory = GobangGameFactory(10, 10, 1, 24);
+    auto app = factory.initGobangGame();
+    app->run();    
     getch();
 
     endwin();
